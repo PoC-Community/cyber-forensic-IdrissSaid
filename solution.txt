@@ -1,0 +1,41 @@
+Challenge 1 — Qui utilise cette machine ?
+Flag : PoC{PoC_W0rk$Hop,BrunoDeChezPoC}
+
+Raisonnement :
+J’ai utilisé le plugin envars pour lister les variables d’environnement de tous les processus, puis j’ai filtré sur « USERNAME »
+Commande :
+python vol.py -f vmss.core --profile=Win10x64_14393 envars | grep USERNAME
+La sortie a révélé deux utilisateurs distincts : PoC_W0rk$Hop et BrunoDeChezPoC
+
+
+Challenge 2 — Connexion suspecte
+Flag : PoC{7912+BrunoDeChezPoC}
+
+Raisonnement :
+J’ai inspecté les lignes de commande des processus en cours d’exécution à l’aide du plugin cmdline
+Commande :
+python vol.py -f vmss.core --profile=Win10x64_14393 cmdline
+J’ai trouvé un processus suspect python.exe (PID 7912) exécutant un script nommé BadProgram
+Le propriétaire de ce processus (identifié lors du Challenge 1 ou via getsids) est BrunoDeChezPoC
+
+
+Challenge 3 — Analyse de la ligne de commande
+Flag : PoC{7881be27f7507725dc5229f5700f36a7cacc1fb0}
+
+Raisonnement :
+J’ai extrait la ligne de commande pour le PID 7912
+Ligne de commande :
+C:\Users\BrunoDeChezPoC\AppData\Local\Programs\Python\Python38\python.exe BadProgram
+J’ai calculé le hash avec la chaîne
+Commande :
+echo -n "C:\Users\BrunoDeChezPoC\AppData\Local\Programs\Python\Python38\python.exe BadProgram.py.txt" | sha1sum
+
+
+Challenge 4 — Dump mémoire du processus
+Flag : PoC{ab6279f6f02f55aae8eadbb259a8e0f18bab04fb4b0f1bc13cf0f11787ae5dd20c439a1f049c1532d2bfc371e63c4634397c31e00f95ff44a0c81ce022ee8070}
+
+Raisonnement :
+J’ai créé un dump du binaire du processus en utilisant procdump
+Commande :
+python vol.py -f vmss.core --profile=Win10x64_14393 procdump -p 7912 -D dumps/
+J’ai ensuite calculé le hash SHA512 de l’exécutable extrait executable.7912.exe
